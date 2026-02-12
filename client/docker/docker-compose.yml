@@ -1,0 +1,26 @@
+name: client
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: client_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ../:/var/www/html
+      - ../docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ../docker/nginx/default.conf:/etc/nginx/http.d/default.conf
+    networks:
+      - client_network
+    environment:
+      - PHP_OPCACHE_VALIDATE_TIMESTAMPS=1
+      - APP_ENV=local
+      - APP_DEBUG=true
+    ports:
+      - "${APP_PORT:-8001}:80"
+
+networks:
+  client_network:
+    driver: bridge
