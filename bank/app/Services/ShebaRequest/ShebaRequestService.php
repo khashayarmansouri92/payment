@@ -73,7 +73,7 @@ readonly class ShebaRequestService implements ShebaRequestServiceInterface
 
         if ( !empty( $cached ) )
         {
-            return $this->getPendingList();
+            return $this->getPendingList( $cached );
         }
 
         return $this->getFromDatabase( $statusEnum );
@@ -257,24 +257,12 @@ readonly class ShebaRequestService implements ShebaRequestServiceInterface
     }
 
     /**
+     * @param $cached
      * @return array
      */
-    private function getPendingList(): array
+    private function getPendingList( $cached ): array
     {
-        if ( !empty( $cached ) )
-        {
-            return array_map( fn( $item ) => json_decode( $item, true ), $cached );
-        }
-
-        $requests = $this->shebaRequestRepository->findByStatusOrdered( ShebaRequestStatus::PENDING );
-        $response = $requests->map( fn( $r ) => $this->mapToResponse( $r ) )->toArray();
-
-        if ( !empty( $response ) )
-        {
-            $this->rebuildPendingList( $response );
-        }
-
-        return $response;
+        return array_map( fn( $item ) => json_decode( $item, true ), $cached );
     }
 
     /**
@@ -284,7 +272,14 @@ readonly class ShebaRequestService implements ShebaRequestServiceInterface
     private function getFromDatabase( ShebaRequestStatus $status ): array
     {
         $requests = $this->shebaRequestRepository->findByStatusOrdered( $status );
-        return $requests->map( fn( $r ) => $this->mapToResponse( $r ) )->toArray();
+        $response = $requests->map( fn( $r ) => $this->mapToResponse( $r ) )->toArray();
+
+        if ( !empty( $response ) )
+        {
+            $this->rebuildPendingList( $response );
+        }
+
+        return $response;
     }
 
     /**
